@@ -445,6 +445,8 @@ void clockevents_register_device(struct clock_event_device *dev)
 {
 	unsigned long flags;
 
+	pr_info("[TRACE] clockevents_register_device %s irq %d\n", dev->name, dev->irq);
+
 	/* Initialize state to DETACHED */
 	clockevent_set_state(dev, CLOCK_EVT_STATE_DETACHED);
 

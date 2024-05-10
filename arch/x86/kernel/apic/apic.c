@@ -610,8 +610,11 @@ static __init bool apic_validate_deadline_timer(void)
  */
 static void setup_APIC_timer(void)
 {
+	/*每个CPU对应的lapic timer*/
 	struct clock_event_device *levt = this_cpu_ptr(&lapic_events);
+	pr_info("[TRACE] setup_APIC_timer\n");
 
+	/*ARAT: Always Run Apic Timer，intel实现的特性；timer不随CPU睡眠而停止*/
 	if (this_cpu_has(X86_FEATURE_ARAT)) {
 		lapic_clockevent.features &= ~CLOCK_EVT_FEAT_C3STOP;
 		/* Make LAPIC timer preferrable over percpu HPET */
@@ -835,6 +838,8 @@ static int __init calibrate_APIC_clock(void)
 	long delta, deltatsc;
 	int pm_referenced = 0;
 
+	pr_info("[TRACE] calibrate_APIC_clock\n");
+
 	if (boot_cpu_has(X86_FEATURE_TSC_DEADLINE_TIMER))
 		return 0;
 
@@ -1009,6 +1014,7 @@ static int __init calibrate_APIC_clock(void)
  */
 void __init setup_boot_APIC_clock(void)
 {
+	pr_info("[TRACE] setup_boot_APIC_clock\n");
 	/*
 	 * The local apic timer can be disabled via the kernel
 	 * commandline or from the CPU detection code. Register the lapic
@@ -1289,6 +1295,7 @@ enum apic_intr_mode_id apic_intr_mode __ro_after_init;
 
 static int __init __apic_intr_mode_select(void)
 {
+	pr_info("[TRACE] __apic_intr_mode_select\n");
 	/* Check kernel option */
 	if (disable_apic) {
 		pr_info("APIC disabled via kernel command line\n");
@@ -1410,6 +1417,8 @@ static void __init apic_bsp_setup(bool upmode);
 void __init apic_intr_mode_init(void)
 {
 	bool upmode = IS_ENABLED(CONFIG_UP_LATE_INIT);
+
+	pr_info("[TRACE] apic_intr_mode_init\n");
 
 	switch (apic_intr_mode) {
 	case APIC_PIC:
@@ -1559,6 +1568,8 @@ static void setup_local_APIC(void)
 	int cpu = smp_processor_id();
 	unsigned int value;
 
+	pr_info("[TRACE] core %d setup_local_APIC\n", cpu);
+
 	if (disable_apic) {
 		disable_ioapic_support();
 		return;
@@ -1685,9 +1696,11 @@ static void setup_local_APIC(void)
 	value = apic_read(APIC_LVT0) & APIC_LVT_MASKED;
 	if (!cpu && (pic_mode || !value || skip_ioapic_setup)) {
 		value = APIC_DM_EXTINT;
+		pr_info("[TRACE] enabled ExtINT on CPU#%d\n", cpu);
 		apic_printk(APIC_VERBOSE, "enabled ExtINT on CPU#%d\n", cpu);
 	} else {
 		value = APIC_DM_EXTINT | APIC_LVT_MASKED;
+		pr_info("[TRACE] masked ExtINT on CPU#%d\n", cpu);
 		apic_printk(APIC_VERBOSE, "masked ExtINT on CPU#%d\n", cpu);
 	}
 	apic_write(APIC_LVT0, value);
@@ -2059,11 +2072,20 @@ void __init init_apic_mappings(void)
 {
 	unsigned int new_apicid;
 
+	pr_info("[TRACE] init_apic_mappings\n");
+
 	if (apic_validate_deadline_timer())
 		pr_info("TSC deadline timer available\n");
 
 	if (x2apic_mode) {
+		pr_info("[TRACE] x2apic_mode is true\n");
+		pr_info("[TRACE] register_lapic_address as 0x%lx (phy:0x%x) (FIX:0x%x)\n", APIC_BASE, 0xfee00000, FIX_APIC_BASE);
+		
+		set_fixmap_nocache(FIX_APIC_BASE, 0xfee00000);
 		boot_cpu_physical_apicid = read_apic_id();
+
+		pr_info("[TRACE] boot_cpu_physical_apicid %d\n", boot_cpu_physical_apicid);
+
 		return;
 	}
 
@@ -2104,6 +2126,8 @@ void __init init_apic_mappings(void)
 void __init register_lapic_address(unsigned long address)
 {
 	mp_lapic_addr = address;
+
+	pr_info("[TRACE] register_lapic_address as 0x%lx (phy:0x%lx) (FIX:0x%x)\n", APIC_BASE, address, FIX_APIC_BASE);
 
 	if (!x2apic_mode) {
 		set_fixmap_nocache(FIX_APIC_BASE, address);

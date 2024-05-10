@@ -348,6 +348,10 @@ void tick_check_new_device(struct clock_event_device *newdev)
 	td = &per_cpu(tick_cpu_device, cpu);
 	curdev = td->evtdev;
 
+	pr_info("[TRACE] tick_check_new_device current dev %s irq %d\n", curdev ? curdev->name:"NULL", curdev? curdev->irq:-1);
+
+	pr_info("[TRACE] tick_check_new_device new_dev %s irq %d\n", newdev->name, newdev->irq);
+
 	/* cpu local device ? */
 	if (!tick_check_percpu(curdev, newdev, cpu))
 		goto out_bc;

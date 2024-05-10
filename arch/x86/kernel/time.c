@@ -54,6 +54,7 @@ EXPORT_SYMBOL(profile_pc);
  */
 static irqreturn_t timer_interrupt(int irq, void *dev_id)
 {
+	pr_info("[TRACE] timer_interrupt global_clock_event %s\n", global_clock_event->name);
 	global_clock_event->event_handler(global_clock_event);
 	return IRQ_HANDLED;
 }
@@ -61,6 +62,8 @@ static irqreturn_t timer_interrupt(int irq, void *dev_id)
 static void __init setup_default_timer_irq(void)
 {
 	unsigned long flags = IRQF_NOBALANCING | IRQF_IRQPOLL | IRQF_TIMER;
+
+	pr_info("[TRACE] setup_default_timer_irq\n");
 
 	/*
 	 * Unconditionally register the legacy timer interrupt; even
@@ -74,7 +77,9 @@ static void __init setup_default_timer_irq(void)
 /* Default timer init function */
 void __init hpet_time_init(void)
 {
+	pr_info("[TRACE] hpet_time_init\n");
 	if (!hpet_enable()) {
+		pr_info("[TRACE] hpet is not enabled, call pit_timer_init\n");
 		if (!pit_timer_init())
 			return;
 	}
@@ -84,6 +89,7 @@ void __init hpet_time_init(void)
 
 static __init void x86_late_time_init(void)
 {
+	pr_info("[TRACE] x86_late_time_init\n");
 	/*
 	 * Before PIT/HPET init, select the interrupt mode. This is required
 	 * to make the decision whether PIT should be initialized correct.
@@ -100,8 +106,12 @@ static __init void x86_late_time_init(void)
 	x86_init.irqs.intr_mode_init();
 	tsc_init();
 
-	if (static_cpu_has(X86_FEATURE_WAITPKG))
+	pr_info("[TRACE] return from tsc_init\n");
+
+	if (static_cpu_has(X86_FEATURE_WAITPKG)) {
+		pr_info("[TRACE] set use_tpause_delay\n");
 		use_tpause_delay();
+	}
 }
 
 /*
@@ -110,6 +120,7 @@ static __init void x86_late_time_init(void)
  */
 void __init time_init(void)
 {
+	pr_info("[TRACE] time_init\n");
 	late_time_init = x86_late_time_init;
 }
 

@@ -20,6 +20,8 @@ void __init default_setup_apic_routing(void)
 {
 	struct apic **drv;
 
+	pr_info("[TRACE] probe_64 default_setup_apic_routing\n");
+
 	enable_IR_x2apic();
 
 	for (drv = __apicdrivers; drv < __apicdrivers_end; drv++) {

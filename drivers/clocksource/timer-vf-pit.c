@@ -153,6 +153,8 @@ static int __init pit_timer_init(struct device_node *np)
 	unsigned long clk_rate;
 	int irq, ret;
 
+	pr_info("[TRACE] timer-vf-pit pit_timer_init\n");
+
 	timer_base = of_iomap(np, 0);
 	if (!timer_base) {
 		pr_err("Failed to iomap\n");

@@ -60,6 +60,8 @@ static void mask_8259A_irq(unsigned int irq)
 	unsigned int mask = 1 << irq;
 	unsigned long flags;
 
+	pr_info("[TRACE] mask_8259A_irq %d\n", irq);
+
 	raw_spin_lock_irqsave(&i8259A_lock, flags);
 	cached_irq_mask |= mask;
 	if (irq & 8)
@@ -303,6 +305,8 @@ static int probe_8259A(void)
 	unsigned long flags;
 	unsigned char probe_val = ~(1 << PIC_CASCADE_IR);
 	unsigned char new_val;
+
+	pr_info("[TRACE] probe_8259A\n");
 	/*
 	 * Check to see if we have a PIC.
 	 * Mask all except the cascade and read
@@ -316,6 +320,7 @@ static int probe_8259A(void)
 	outb(probe_val, PIC_MASTER_IMR);
 	new_val = inb(PIC_MASTER_IMR);
 	if (new_val != probe_val) {
+		pr_info("[TRACE] Using NULL legacy PIC\n");
 		printk(KERN_INFO "Using NULL legacy PIC\n");
 		legacy_pic = &null_legacy_pic;
 	}

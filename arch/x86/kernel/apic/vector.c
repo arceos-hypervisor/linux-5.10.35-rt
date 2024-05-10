@@ -711,6 +711,8 @@ int __init arch_early_irq_init(void)
 {
 	struct fwnode_handle *fn;
 
+	pr_info("[TRACE] arch_early_irq_init\n");
+
 	fn = irq_domain_alloc_named_fwnode("VECTOR");
 	BUG_ON(!fn);
 	x86_vector_domain = irq_domain_create_tree(fn, &x86_vector_domain_ops,

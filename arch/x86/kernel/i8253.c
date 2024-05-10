@@ -39,6 +39,8 @@ static bool __init use_pit(void)
 
 bool __init pit_timer_init(void)
 {
+	pr_info("[TRACE] i8253 pit_timer_init\n");
+	
 	if (!use_pit())
 		return false;
 

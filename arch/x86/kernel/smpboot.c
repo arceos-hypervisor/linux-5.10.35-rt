@@ -1314,6 +1314,8 @@ void __init native_smp_prepare_cpus(unsigned int max_cpus)
 {
 	unsigned int i;
 
+	pr_info("[TRACE] native_smp_prepare_cpus\n");
+
 	smp_cpu_index_default();
 
 	/*
@@ -1347,6 +1349,7 @@ void __init native_smp_prepare_cpus(unsigned int max_cpus)
 	case APIC_PIC:
 	case APIC_VIRTUAL_WIRE_NO_CONFIG:
 		disable_smp();
+		pr_info("[TRACE] native_smp_prepare_cpus APIC_VIRTUAL_WIRE_NO_CONFIG, return\n");
 		return;
 	case APIC_SYMMETRIC_IO_NO_ROUTING:
 		disable_smp();
@@ -1359,6 +1362,7 @@ void __init native_smp_prepare_cpus(unsigned int max_cpus)
 	}
 
 	/* Setup local timer */
+	pr_info("[TRACE] native_smp_prepare_cpus call setup_percpu_clockev\n");
 	x86_init.timers.setup_percpu_clockev();
 
 	smp_get_logical_apicid();

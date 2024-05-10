@@ -1021,6 +1021,9 @@ asmlinkage __visible void __init __no_sanitize_address start_kernel(void)
 	acpi_early_init();
 	if (late_time_init)
 		late_time_init();
+
+	pr_info("[TRACE] late_time_init ok()\n");
+
 	sched_clock_init();
 	calibrate_delay();
 	pid_idr_init();
@@ -1412,6 +1415,8 @@ static int __ref kernel_init(void *unused)
 {
 	int ret;
 
+	pr_info("[TRACE] kernel_init");
+
 	kernel_init_freeable();
 	/* need to finish all async __init code before freeing the memory */
 	async_synchronize_full();
@@ -1492,6 +1497,7 @@ void __init console_on_rootfs(void)
 
 static noinline void __init kernel_init_freeable(void)
 {
+	pr_info("[TRACE] kernel_init_freeable\n");
 	/*
 	 * Wait until kthreadd is all set-up.
 	 */

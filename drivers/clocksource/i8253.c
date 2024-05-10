@@ -180,6 +180,8 @@ struct clock_event_device i8253_clockevent = {
  */
 void __init clockevent_i8253_init(bool oneshot)
 {
+	pr_info("[TRACE] clockevent_i8253_init %s\n", oneshot ? "oneshot" : "periodic");
+	
 	if (oneshot) {
 		i8253_clockevent.features |= CLOCK_EVT_FEAT_ONESHOT;
 		i8253_clockevent.set_state_oneshot = pit_set_oneshot;

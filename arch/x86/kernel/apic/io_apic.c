@@ -2130,6 +2130,8 @@ static inline void __init check_timer(void)
 	unsigned long flags;
 	int no_pin1 = 0;
 
+	pr_info("[TRACE] check_timer dest_apicid = %d vector=0x%02X\n", cfg->dest_apicid,cfg->vector);
+
 	if (!global_clock_event)
 		return;
 

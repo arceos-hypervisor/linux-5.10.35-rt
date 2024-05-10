@@ -55,6 +55,8 @@ void __init init_ISA_irqs(void)
 	struct irq_chip *chip = legacy_pic->chip;
 	int i;
 
+	pr_info("[TRACE] init_ISA_irqs\n");
+
 	/*
 	 * Try to set up the through-local-APIC virtual wire mode earlier.
 	 *
@@ -72,6 +74,8 @@ void __init init_ISA_irqs(void)
 void __init init_IRQ(void)
 {
 	int i;
+
+	pr_info("[TRACE] init_IRQ\n");
 
 	/*
 	 * On cpu 0, Assign ISA_IRQ_VECTOR(irq) to IRQ 0..15.
@@ -99,6 +103,7 @@ void __init native_init_IRQ(void)
 
 	if (!acpi_ioapic && !of_ioapic && nr_legacy_irqs()) {
 		/* IRQ2 is cascade interrupt to second interrupt controller */
+		pr_info("[TRACE] native_init_IRQ\n");
 		if (request_irq(2, no_action, IRQF_NO_THREAD, "cascade", NULL))
 			pr_err("%s: request_irq() failed\n", "cascade");
 	}

@@ -326,6 +326,10 @@ static u64 tsc_read_refs(u64 *p, int hpet)
 		else
 			*p = acpi_pm_read_early();
 		t2 = get_cycles();
+
+		// pr_info("[TRACE] tsc_read_refs t1 %lld t2 %lld thresh %lld tsc_khz 0x%x\n", 
+		// 	t2, t1, thresh, tsc_khz);
+
 		if ((t2 - t1) < thresh)
 			return t2;
 	}
@@ -442,9 +446,12 @@ static unsigned long pit_calibrate_tsc(u32 latch, unsigned long ms, int loopmin)
 	 * If the maximum is 10 times larger than the minimum,
 	 * then we got hit by an SMI as well.
 	 */
-	if (pitcnt < loopmin || tscmax > 10 * tscmin)
+	if (pitcnt < loopmin || tscmax > 10 * tscmin) {
+		pr_warn("[TRACE] pitcnt %d loopmin %d tscmin %ld tscmax %ld\n", pitcnt, loopmin, tscmin, tscmax);
 		return ULONG_MAX;
+	}
 
+	pr_info("[TRACE] pit_calibrate_tsc success!!!\npitcnt %d loopmin %d tscmin %ld tscmax %ld\n", pitcnt, loopmin, tscmin, tscmax);
 	/* Calculate the PIT value */
 	delta = t2 - t1;
 	do_div(delta, ms);
@@ -532,6 +539,8 @@ static unsigned long quick_pit_calibrate(void)
 	if (!has_legacy_pic())
 		return 0;
 
+	pr_info("[TRACE] quick_pit_calibrate()\n");
+
 	/* Set the Gate high, disable speaker */
 	outb((inb(0x61) & ~0x02) | 0x01, 0x61);
 
@@ -560,8 +569,10 @@ static unsigned long quick_pit_calibrate(void)
 
 	if (pit_expect_msb(0xff, &tsc, &d1)) {
 		for (i = 1; i <= MAX_QUICK_PIT_ITERATIONS; i++) {
-			if (!pit_expect_msb(0xff-i, &delta, &d2))
+			if (!pit_expect_msb(0xff-i, &delta, &d2)) {
+				pr_info("[TRACE] break from !pit_expect_msb %d\n", i);
 				break;
+			}
 
 			delta -= tsc;
 
@@ -570,9 +581,10 @@ static unsigned long quick_pit_calibrate(void)
 			 * never be below 500 ppm.
 			 */
 			if (i == 1 &&
-			    d1 + d2 >= (delta * MAX_QUICK_PIT_ITERATIONS) >> 11)
+			    d1 + d2 >= (delta * MAX_QUICK_PIT_ITERATIONS) >> 11) {
+				pr_info("[TRACE] break from d1 + d2 %ld too big, %d\n", d1 + d2, i);
 				return 0;
-
+				}
 			/*
 			 * Iterate until the error is less than 500 ppm
 			 */
@@ -586,10 +598,14 @@ static unsigned long quick_pit_calibrate(void)
 			 * This also guarantees serialization of the
 			 * last cycle read ('d2') in pit_expect_msb.
 			 */
-			if (!pit_verify_msb(0xfe - i))
+			if (!pit_verify_msb(0xfe - i)) {
+				pr_info("[TRACE] break from !pit_verify_msb(0xfe - %d)\n", i);
 				break;
+			}
 			goto success;
 		}
+	} else {
+		pr_info("[TRACE] pit_expect_msb() return false\n");
 	}
 	pr_info("Fast TSC calibration failed\n");
 	return 0;
@@ -696,6 +712,11 @@ static unsigned long cpu_khz_from_cpuid(void)
 {
 	unsigned int eax_base_mhz, ebx_max_mhz, ecx_bus_mhz, edx;
 
+	pr_info("[TRACE] cpu_khz_from_cpuid\n");
+
+	pr_info("[TRACE] boot_cpu_data.x86_vendor %d\n", (int) boot_cpu_data.x86_vendor);
+	pr_info("[TRACE] boot_cpu_data.cpuid_level %d\n", boot_cpu_data.cpuid_level);
+
 	if (boot_cpu_data.x86_vendor != X86_VENDOR_INTEL)
 		return 0;
 
@@ -705,6 +726,8 @@ static unsigned long cpu_khz_from_cpuid(void)
 	eax_base_mhz = ebx_max_mhz = ecx_bus_mhz = edx = 0;
 
 	cpuid(0x16, &eax_base_mhz, &ebx_max_mhz, &ecx_bus_mhz, &edx);
+
+	pr_info("[TRACE] cpuid get eax_base_mhz %d\n", eax_base_mhz);
 
 	return eax_base_mhz * 1000;
 }
@@ -719,6 +742,8 @@ static unsigned long pit_hpet_ptimer_calibrate_cpu(void)
 	unsigned long tsc_pit_min = ULONG_MAX, tsc_ref_min = ULONG_MAX;
 	unsigned long flags, latch, ms;
 	int hpet = is_hpet_enabled(), i, loopmin;
+
+	pr_info("[TRACE] !!! pit_hpet_ptimer_calibrate_cpu()\nhpet is %s enabled\n", hpet ? "":"not");
 
 	/*
 	 * Run 5 calibration loops to get the lowest frequency value
@@ -800,6 +825,8 @@ static unsigned long pit_hpet_ptimer_calibrate_cpu(void)
 			return tsc_ref_min;
 		}
 
+		pr_info("[TRACE] %d tsc_ref_min %ld\n", i, tsc_ref_min);
+
 		/*
 		 * Check whether PIT failed more than once. This
 		 * happens in virtualized environments. We need to
@@ -869,9 +896,14 @@ unsigned long native_calibrate_cpu_early(void)
 {
 	unsigned long flags, fast_calibrate = cpu_khz_from_cpuid();
 
-	if (!fast_calibrate)
-		fast_calibrate = cpu_khz_from_msr();
+	pr_info("[TRACE] native_calibrate_cpu_early EARLY\n");
+
 	if (!fast_calibrate) {
+		pr_info("[TRACE] Try cpu_khz_from_msr()\n");
+		fast_calibrate = cpu_khz_from_msr();
+	}
+	if (!fast_calibrate) {
+		pr_info("[TRACE] Try quick_pit_calibrate()\n");
 		local_irq_save(flags);
 		fast_calibrate = quick_pit_calibrate();
 		local_irq_restore(flags);
@@ -1417,12 +1449,19 @@ static bool __init determine_cpu_tsc_frequencies(bool early)
 	/* Make sure that cpu and tsc are not already calibrated */
 	WARN_ON(cpu_khz || tsc_khz);
 
+	pr_info("[TRACE] determine_cpu_tsc_frequencies %s\n", early? "EARLY" : "LATE");
+
 	if (early) {
 		cpu_khz = x86_platform.calibrate_cpu();
-		if (tsc_early_khz)
+		pr_info("[TRACE] x86_platform.calibrate_cpu get cpu_khz %d\n", cpu_khz);
+		if (tsc_early_khz) {
 			tsc_khz = tsc_early_khz;
-		else
+			pr_info("[TRACE] get tsc_khz %d from tsc_early_khz\n", tsc_khz);
+		}
+		else {
 			tsc_khz = x86_platform.calibrate_tsc();
+			pr_info("[TRACE] x86_platform.calibrate_tsc get tsc_khz %d\n", tsc_khz);
+		}
 	} else {
 		/* We should not be here with non-native cpu calibration */
 		WARN_ON(x86_platform.calibrate_cpu != native_calibrate_cpu);
@@ -1472,6 +1511,8 @@ static void __init tsc_enable_sched_clock(void)
 
 void __init tsc_early_init(void)
 {
+	pr_info("[TRACE] tsc_early_init\n");	
+
 	if (!boot_cpu_has(X86_FEATURE_TSC))
 		return;
 	/* Don't change UV TSC multi-chassis synchronization */
@@ -1486,6 +1527,8 @@ void __init tsc_early_init(void)
 
 void __init tsc_init(void)
 {
+	
+	pr_info("[TRACE] tsc_init\n");
 	/*
 	 * native_calibrate_cpu_early can only calibrate using methods that are
 	 * available early in boot.
@@ -1499,6 +1542,7 @@ void __init tsc_init(void)
 	}
 
 	if (!tsc_khz) {
+		pr_info("[TRACE] tsc_init: We failed to determine frequencies earlier, try again\n");
 		/* We failed to determine frequencies earlier, try again */
 		if (!determine_cpu_tsc_frequencies(false)) {
 			mark_tsc_unstable("could not calculate TSC khz");

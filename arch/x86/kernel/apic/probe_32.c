@@ -141,6 +141,8 @@ void __init default_setup_apic_routing(void)
 {
 	int version = boot_cpu_apic_version;
 
+	pr_info("[TRACE] probe_32 default_setup_apic_routing\n");
+
 	if (num_possible_cpus() > 8) {
 		switch (boot_cpu_data.x86_vendor) {
 		case X86_VENDOR_INTEL:
