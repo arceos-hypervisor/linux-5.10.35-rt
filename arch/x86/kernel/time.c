@@ -54,7 +54,7 @@ EXPORT_SYMBOL(profile_pc);
  */
 static irqreturn_t timer_interrupt(int irq, void *dev_id)
 {
-	pr_info("[TRACE] timer_interrupt global_clock_event %s\n", global_clock_event->name);
+	// pr_info("[TRACE] timer_interrupt global_clock_event %s\n", global_clock_event->name);
 	global_clock_event->event_handler(global_clock_event);
 	return IRQ_HANDLED;
 }

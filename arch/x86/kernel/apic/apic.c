@@ -1332,10 +1332,11 @@ static int __init __apic_intr_mode_select(void)
 	/* Check MP table or ACPI MADT configuration */
 	if (!smp_found_config) {
 		disable_ioapic_support();
-		if (!acpi_lapic) {
-			pr_info("APIC: ACPI MADT or MP tables are not detected\n");
-			return APIC_VIRTUAL_WIRE_NO_CONFIG;
-		}
+		// if (!acpi_lapic) {
+		// 	pr_info("APIC: ACPI MADT or MP tables are not detected\n");
+		// 	return APIC_VIRTUAL_WIRE_NO_CONFIG;
+		// }
+		pr_info("[TRACE] Return APIC_VIRTUAL_WIRE in __apic_intr_mode_select\n");
 		return APIC_VIRTUAL_WIRE;
 	}
 
